@@ -63,7 +63,7 @@ public class ServoPositionHelper extends LinearOpMode {
     private double positionAdjustment = 0.05;
 
     // This variable captures how much we need to increment or decrement the step size by
-    private final double STEP_ADJUSTMENT = 0.05;
+    private final double STEP_ADJUSTMENT = 0.01;
 
     // This variable is the maximum position we want to send to the servo.
     // Some servos do not operate well went sent a signal too large, or too small.
@@ -71,6 +71,14 @@ public class ServoPositionHelper extends LinearOpMode {
     // Converted to 0-1, that means we should not send a Hitec Linear Servo less than 0.25, or more than 0.75.
     private final double MIN_POSITION = 0;
     private final double MAX_POSITION = 1;
+
+    /*
+    These booleans are used in the "rising edge detection"
+     */
+    private boolean previousGamepadY = false;
+    private boolean previousGamePadA = false;
+    private boolean previousGamePadUp = false;
+    private boolean previousGamePadDown = false;
 
     @Override
     public void runOpMode() {
@@ -96,20 +104,33 @@ public class ServoPositionHelper extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
 
+            /*
+            This sample implements "Rising edge detection" so that it changes the servo position
+            only when you first press the button. Without this, it would continue to change the
+            position every loop. Which is not the behavior we want. To do this detection, we check
+            and see if the gamepad button switches from being not pressed to being pressed. So if
+            previousGamepadY is false, and currentGamepadY is true, then our button went from
+            not being pressed, to pressed. Which means we can run our code.
+             */
+            boolean currentGamepadY = gamepad1.y;
+            boolean currentGamepadA = gamepad1.a;
+            boolean currentGamepadUp = gamepad1.dpad_up;
+            boolean currentGamepadDown = gamepad1.dpad_down;
+
             // Check to see if the user is clicking the Y(△) button on the gamepad.
-            if (gamepad1.y){
+            if (currentGamepadY && !previousGamepadY){
                 // += is an operator that lets us add the step variable without overwriting the servoPosition variable.
                 servoPosition += positionAdjustment;
-            } else if (gamepad1.a){
+            } else if (currentGamepadA && !previousGamePadA){
                 // We use an else if statement here so that we only check if A(x) is pressed after we know
                 // that the Y(△) button is not pressed.
                 servoPosition -= positionAdjustment;
             }
 
             // Here we modify the step size if the user clicks D-pad up or D-pad down.
-            if (gamepad1.dpad_up){
+            if (currentGamepadUp && !previousGamePadUp){
                 positionAdjustment += STEP_ADJUSTMENT;
-            } else if (gamepad1.dpad_down){
+            } else if (currentGamepadDown && !previousGamePadDown){
                 positionAdjustment -= STEP_ADJUSTMENT;
             }
 
@@ -123,6 +144,12 @@ public class ServoPositionHelper extends LinearOpMode {
             // Finally, set the servo to the servoPosition variable. We do this only once per loop
             // so that we can be sure not to write conflicting positions to the servo.
             servo.setPosition(servoPosition);
+
+            // Because our logic has finished, we set our "previousGamepad" booleans to the current ones.
+            previousGamepadY = currentGamepadY;
+            previousGamePadA = currentGamepadA;
+            previousGamePadUp = currentGamepadUp;
+            previousGamePadDown = currentGamepadDown;
 
             // Show the servo position
             telemetry.addData("Servo Position", servoPosition);
