@@ -25,7 +25,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.ServoImplEx;
 
 
 /*
@@ -53,7 +53,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 public class ServoPositionHelper extends LinearOpMode {
 
     // Declare OpMode member.
-    private Servo servo = null;
+    private ServoImplEx servo = null;
 
     /*
      * Create a variable which we will modify with our code. Eventually we will instruct
@@ -61,20 +61,28 @@ public class ServoPositionHelper extends LinearOpMode {
      */
     private double servoPosition = 0.5;
 
+    /*
+     * Check the specifications for your servo to find the maximum range in degrees. Many times
+     * this is approximately 180°. Here are some ranges for commonly used FTC Servos:
+     * Hitec HS-485HB: 190°
+     * Hitec HS-318: 210°
+     * REV Smart Robot Servo: 270°
+     * goBILDA 2000 Series Dual Mode: 300°
+     * goBILDA 2000 Series 5-Turn: 1800°
+     * AndyMark 1 Turn Servo: 280°
+     * AndyMark 5 Turn Servo: 1800°
+     * Studica Multi Mode Servo: 300°
+     * Axon MAX+/MINI+: 180° default
+     * Swyft Servo: 270° default
+     */
+    private double servoRangeDegrees = 180;
+
     // Create a variable for size of each "step" that we will increment or decrement our servo position by.
     private double positionAdjustment = 0.05;
 
     // This variable captures how much we need to increment or decrement the step size by
     private final double STEP_ADJUSTMENT = 0.01;
 
-    /*
-     * This variable is the maximum position we want to send to the servo.
-     * Some servos do not operate well went sent a signal too large, or too small.
-     * Most Hitec Linear servos for example only respond to signals within a 1050-1950µsec range.
-     * Converted to 0-1, that means we should not send a Hitec Linear Servo less than 0.25, or more than 0.75.
-     */
-    private final double MIN_POSITION = 0;
-    private final double MAX_POSITION = 1;
 
     // These booleans are used in the "rising edge detection"
     private boolean previousGamepadY = false;
@@ -90,7 +98,7 @@ public class ServoPositionHelper extends LinearOpMode {
          * Initialize the hardware variables, string here must exactly match the name of a configured
          * servo in the Robot Configuration on your Driver Station.
          */
-        servo = hardwareMap.get(Servo.class, "servo");
+        servo = hardwareMap.get(ServoImplEx.class, "servo");
 
         /*
          * Set the servo to an initial position of 0.5, we do this before the while (opModeIsActive())
