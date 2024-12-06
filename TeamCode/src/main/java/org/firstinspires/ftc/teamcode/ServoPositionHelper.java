@@ -155,10 +155,10 @@ public class ServoPositionHelper extends LinearOpMode {
             }
 
             // Check to see if we're setting the servoPosition to less than the min, or more than the max.
-            if (servoPosition > MAX_POSITION){
-                servoPosition = MAX_POSITION;
-            } else if (servoPosition < MIN_POSITION){
-                servoPosition = MIN_POSITION;
+            if (servoPosition > 1){
+                servoPosition = 1;
+            } else if (servoPosition < 0){
+                servoPosition = 0;
             }
 
             /*
