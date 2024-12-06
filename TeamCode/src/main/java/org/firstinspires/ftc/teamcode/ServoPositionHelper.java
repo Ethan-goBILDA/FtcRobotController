@@ -55,8 +55,10 @@ public class ServoPositionHelper extends LinearOpMode {
     // Declare OpMode member.
     private Servo servo = null;
 
-    // Create a variable which we will modify with our code. Eventually we will instruct
-    // the servo to run to the position captured by this variable.
+    /*
+     * Create a variable which we will modify with our code. Eventually we will instruct
+     * the servo to run to the position captured by this variable.
+     */
     private double servoPosition = 0.5;
 
     // Create a variable for size of each "step" that we will increment or decrement our servo position by.
@@ -65,16 +67,16 @@ public class ServoPositionHelper extends LinearOpMode {
     // This variable captures how much we need to increment or decrement the step size by
     private final double STEP_ADJUSTMENT = 0.01;
 
-    // This variable is the maximum position we want to send to the servo.
-    // Some servos do not operate well went sent a signal too large, or too small.
-    // Most Hitec Linear servos for example only respond to signals within a 1050-1950µsec range.
-    // Converted to 0-1, that means we should not send a Hitec Linear Servo less than 0.25, or more than 0.75.
+    /*
+     * This variable is the maximum position we want to send to the servo.
+     * Some servos do not operate well went sent a signal too large, or too small.
+     * Most Hitec Linear servos for example only respond to signals within a 1050-1950µsec range.
+     * Converted to 0-1, that means we should not send a Hitec Linear Servo less than 0.25, or more than 0.75.
+     */
     private final double MIN_POSITION = 0;
     private final double MAX_POSITION = 1;
 
-    /*
-    These booleans are used in the "rising edge detection"
-     */
+    // These booleans are used in the "rising edge detection"
     private boolean previousGamepadY = false;
     private boolean previousGamePadA = false;
     private boolean previousGamePadUp = false;
@@ -84,13 +86,17 @@ public class ServoPositionHelper extends LinearOpMode {
     public void runOpMode() {
         telemetry.addData("Status", "Initialized");
 
-        // Initialize the hardware variables, string here must exactly match the name of a configured
-        // servo in the Robot Configuration on your Driver Station.
+        /*
+         * Initialize the hardware variables, string here must exactly match the name of a configured
+         * servo in the Robot Configuration on your Driver Station.
+         */
         servo = hardwareMap.get(Servo.class, "servo");
 
-        // Set the servo to an initial position of 0.5, we do this before the while (opModeIsActive())
-        // loop starts so that we can install the servo attachment in a "known" position.
-        // There isn't anything special about doing this at 0.5. We could instead choose 0, or 1!
+        /*
+         * Set the servo to an initial position of 0.5, we do this before the while (opModeIsActive())
+         * loop starts so that we can install the servo attachment in a "known" position.
+         * There isn't anything special about doing this at 0.5. We could instead choose 0, or 1!
+         */
         servoPosition = 0.5;
         servo.setPosition(servoPosition);
 
@@ -105,12 +111,18 @@ public class ServoPositionHelper extends LinearOpMode {
         while (opModeIsActive()) {
 
             /*
-            This sample implements "Rising edge detection" so that it changes the servo position
-            only when you first press the button. Without this, it would continue to change the
-            position every loop. Which is not the behavior we want. To do this detection, we check
-            and see if the gamepad button switches from being not pressed to being pressed. So if
-            previousGamepadY is false, and currentGamepadY is true, then our button went from
-            not being pressed, to pressed. Which means we can run our code.
+             * when the user presses a button. We have a few ways too design how our code responds.
+             * The simplest is to preform an action whenever the button is pressed, in practice,
+             * this means that for every cycle (fraction of a second) that the button is held, it
+             * will run the code in your if statement.
+             * Here we want the code in our statement to only execute once every time that the button
+             * is pressed. To do this, we need to implement "rising edge detection" this works by
+             * checking both the current state of the button (which we store in a boolean called
+             * currentGamepadY) and the state of the button in the previous loop (which we store in
+             * previousGamepadY). If previousGamepadY is false and currentGamepadY is true, then
+             * the button went from not being pressed, to being pressed. Once it is held down, both
+             * booleans will be true. So we can ignore those and just look for the change from one
+             * cycle to the next.
              */
             boolean currentGamepadY = gamepad1.y;
             boolean currentGamepadA = gamepad1.a;
@@ -141,8 +153,10 @@ public class ServoPositionHelper extends LinearOpMode {
                 servoPosition = MIN_POSITION;
             }
 
-            // Finally, set the servo to the servoPosition variable. We do this only once per loop
-            // so that we can be sure not to write conflicting positions to the servo.
+            /*
+             * Finally, set the servo to the servoPosition variable. We do this only once per loop
+             * so that we can be sure not to write conflicting positions to the servo.
+             */
             servo.setPosition(servoPosition);
 
             // Because our logic has finished, we set our "previousGamepad" booleans to the current ones.
