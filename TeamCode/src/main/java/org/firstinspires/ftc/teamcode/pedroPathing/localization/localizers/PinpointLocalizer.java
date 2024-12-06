@@ -200,7 +200,7 @@ public class PinpointLocalizer extends Localizer {
      */
     @Override
     public void resetIMU() {
-    odo.recalibrateIMU();
+    //odo.recalibrateIMU();
     }
 
     /**
