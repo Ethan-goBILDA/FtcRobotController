@@ -43,19 +43,15 @@ public class ConceptWayfinder extends LinearOpMode {
         DRIVE_TO_TARGET_0,
         DRIVE_TO_TARGET_1,
         DRIVE_TO_TARGET_2,
-        DRIVE_TO_TARGET_3,
-        DRIVE_TO_TARGET_4
     }
     StateMachine stateMachine = StateMachine.WAITING_FOR_START;
 
     /*
      * Create a series of Pose2D targets, each of these will be a step in our autonomous.
      */
-    static final Pose2D TARGET_0 = new Pose2D(DistanceUnit.MM,1200,0,AngleUnit.DEGREES,0);
-    static final Pose2D TARGET_1 = new Pose2D(DistanceUnit.MM, 2600, -20, AngleUnit.DEGREES, -90);
-    static final Pose2D TARGET_2 = new Pose2D(DistanceUnit.MM,2600,-2600, AngleUnit.DEGREES,-90);
-    static final Pose2D TARGET_3 = new Pose2D(DistanceUnit.MM, 1200, -2600, AngleUnit.DEGREES, 90);
-    static final Pose2D TARGET_4 = new Pose2D(DistanceUnit.MM, 1200, 0, AngleUnit.DEGREES, 0);
+    static final Pose2D TARGET_0 = new Pose2D(DistanceUnit.MM,800,0,AngleUnit.DEGREES,0);
+    static final Pose2D TARGET_1 = new Pose2D(DistanceUnit.MM, 1600, 0, AngleUnit.DEGREES, -90);
+    static final Pose2D TARGET_2 = new Pose2D(DistanceUnit.MM,800,600, AngleUnit.DEGREES,-90);
 
     @Override
     public void runOpMode() {
@@ -103,23 +99,10 @@ public class ConceptWayfinder extends LinearOpMode {
                 case DRIVE_TO_TARGET_2:
                     if(wayfinder.driveTo(pinpoint.getPosition(), TARGET_2, 0.7, 3)){
                         telemetry.addLine("at position #2");
-                        stateMachine = StateMachine.DRIVE_TO_TARGET_3;
-                    }
-                    break;
-                case DRIVE_TO_TARGET_3:
-                    if(wayfinder.driveTo(pinpoint.getPosition(),TARGET_3,0.7,1)){
-                        telemetry.addLine("at position #3");
-                        stateMachine = StateMachine.DRIVE_TO_TARGET_4;
-                    }
-                    break;
-                case DRIVE_TO_TARGET_4:
-                    if(wayfinder.driveTo(pinpoint.getPosition(),TARGET_4,0.7,1)){
-                        telemetry.addLine("At position #4!");
                         stateMachine = StateMachine.AT_TARGET;
                     }
                     break;
             }
-
 
             //nav calculates the power to set to each motor in a mecanum or tank drive. Use nav.getMotorPower to find that value.
             frontLeftDrive.setPower(wayfinder.getFrontLeftMotorOutput());
@@ -132,7 +115,6 @@ public class ConceptWayfinder extends LinearOpMode {
             Pose2D pos = pinpoint.getPosition();
             String data = String.format(Locale.US, "{X: %.3f, Y: %.3f, H: %.3f}", pos.getX(DistanceUnit.MM), pos.getY(DistanceUnit.MM), pos.getHeading(AngleUnit.DEGREES));
             telemetry.addData("Position", data);
-
             telemetry.update();
 
         }

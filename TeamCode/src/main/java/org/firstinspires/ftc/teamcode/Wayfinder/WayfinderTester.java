@@ -72,7 +72,7 @@ public class WayfinderTester extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
 
-            calculateMecanumOutput(gamepad1.left_stick_y, gamepad1.left_stick_x, gamepad1.right_stick_x);
+            calculateMecanumOutput(-gamepad1.left_stick_y, -gamepad1.left_stick_x, -gamepad1.right_stick_x);
 
             // Send calculated power to wheels
             frontLeftDrive.setPower(frontLeftMotorOutput);
@@ -158,6 +158,5 @@ public class WayfinderTester extends LinearOpMode {
         pinpoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.REVERSED);
 
         pinpoint.resetPosAndIMU();
-
     }
 }
