@@ -27,22 +27,25 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.teamcode.Wayfinder;
+package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
+import dalvik.system.DelegateLastClassLoader;
 
-@TeleOp(name="Wayfinder Tester", group="Pinpoint")
+
+@TeleOp(name="Concept Wayfinder Tester", group="Pinpoint")
 //@Disabled
-public class WayfinderTester extends LinearOpMode {
+public class ConceptWayfinderTester extends LinearOpMode {
 
     // Declare OpMode members for each of the 4 motors.
     private DcMotor frontLeftDrive = null;
@@ -51,10 +54,26 @@ public class WayfinderTester extends LinearOpMode {
     private DcMotor backRightDrive = null;
     private GoBildaPinpointDriver pinpoint = null; // Declare OpMode member for the Odometry Computer
 
+    private ElapsedTime driveTimer = new ElapsedTime();
+
+    private final double TOLERANCE = 50;
+
     private double frontLeftMotorOutput = 0;
     private double frontRightMotorOutput = 0;
     private double backLeftMotorOutput = 0;
     private double backRightMotorOutput = 0;
+
+    public enum StateMachine{
+        WAIT_FOR_START,
+        TEST_X,
+        X_CORRECT,
+        TEST_Y,
+        Y_CORRECT,
+        X_MISMATCH,
+        Y_MISMATCH,
+        CORRECT,
+    }
+    StateMachine stateMachine = StateMachine.WAIT_FOR_START;
 
     @Override
     public void runOpMode() {
@@ -64,7 +83,7 @@ public class WayfinderTester extends LinearOpMode {
         initializePinpoint();
 
         // Wait for the game to start (driver presses START)
-        telemetry.addData("Status", "Initialized");
+        telemetry.addLine("Initialized: Press the Play button to continue");
         telemetry.update();
 
         waitForStart();
@@ -72,40 +91,127 @@ public class WayfinderTester extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
 
-            calculateMecanumOutput(-gamepad1.left_stick_y, -gamepad1.left_stick_x, -gamepad1.right_stick_x);
+            switch (stateMachine){
+                case WAIT_FOR_START:
+                    if(gamepad1.aWasPressed()){
+                        pinpoint.resetPosAndIMU();
+                        sleep(500);
+                        driveTimer.reset();
+                        stateMachine = StateMachine.TEST_X;
+                    }
+                    break;
+                case TEST_X:
+                    if(driveTimer.seconds() < 0.5){
+                        calculateMecanumOutput(0.5,0,0);
+                    } else {
+                        calculateMecanumOutput(0,0,0);
+                        if(pinpoint.getPosX(DistanceUnit.MM) > TOLERANCE){
+                            stateMachine = StateMachine.X_CORRECT;
+                        } else {
+                            stateMachine = StateMachine.X_MISMATCH;
+                        }
+                    }
+                    break;
+                case X_CORRECT:
+                    if(gamepad1.aWasPressed()){
+                        driveTimer.reset();
+                        stateMachine = StateMachine.TEST_Y;
+                    }
+                    if(gamepad1.xWasPressed()){
+                        stateMachine = StateMachine.X_MISMATCH;
+                    }
+                    break;
+                case TEST_Y:
+                    if(driveTimer.seconds() < 0.5){
+                        calculateMecanumOutput(0,0.5,0);
+                    } else {
+                        calculateMecanumOutput(0,0,0);
+                        if(pinpoint.getPosY(DistanceUnit.MM) > TOLERANCE){
+                            stateMachine = StateMachine.Y_CORRECT;
+                        } else {
+                            stateMachine = StateMachine.Y_MISMATCH;
+                        }
+                    }
+                    break;
+                case Y_CORRECT:
+                    if(gamepad1.aWasPressed()){
+                        stateMachine = StateMachine.CORRECT;
+                    }
+                    if(gamepad1.xWasPressed()){
+                        stateMachine = StateMachine.Y_MISMATCH;
+                    }
+                    break;
+                case CORRECT:
+                case X_MISMATCH:
+                case Y_MISMATCH:
+                    if(gamepad1.bWasPressed()){
+                        stateMachine = StateMachine.WAIT_FOR_START;
+                    }
+                    break;
+            }
 
-            // Send calculated power to wheels
             frontLeftDrive.setPower(frontLeftMotorOutput);
             frontRightDrive.setPower(frontRightMotorOutput);
             backLeftDrive.setPower(backLeftMotorOutput);
             backRightDrive.setPower(backRightMotorOutput);
 
-            if(gamepad1.aWasPressed()){
-                pinpoint.setPosition(new Pose2D(DistanceUnit.MM, 0,0, AngleUnit.DEGREES, 0));
-            }
-
             pinpoint.update();
 
-            telemetry.addData("Y Stick", gamepad1.left_stick_y);
-            telemetry.addData("left X Stick", gamepad1.left_stick_x);
-            telemetry.addData("right X Stick", gamepad1.right_stick_x);
+            telemetry.addLine(telemetry(stateMachine));
+            telemetry.addLine("");
 
-            telemetry.addLine("Use the gamepad to drive your robot, pushing the left stick " +
-                    "forward should move the robot forward. The left stick left should move the robot " +
-                    "left. Moving the right stick left should spin the robot counterclockwise.");
-            telemetry.addLine("");
-            telemetry.addLine("Once you have verified that the mecanum drive is correct, " +
-                    "click A to reset the Pinpoint's estimated position and move the robot forward. " +
-                    "The estimated position shown below should see X increase. " +
-                    "If X does not increase, reverse the direction of the X pod. " +
-                    "When you move the robot to the left, the Y position should increase, if it " +
-                    "does not increase, reverse the direction of the Y pod.");
-            telemetry.addLine("");
             telemetry.addData("X in MM", pinpoint.getPosX(DistanceUnit.MM));
             telemetry.addData("Y in MM", pinpoint.getPosY(DistanceUnit.MM));
             telemetry.addData("Heading in Degrees", pinpoint.getHeading(AngleUnit.DEGREES));
             telemetry.update();
         }
+    }
+
+    private String telemetry(StateMachine stateMachine){
+        String output = "";
+        switch (stateMachine){
+            case WAIT_FOR_START:
+                output = "Welcome to the configuration tool for Wayfinder." + System.lineSeparator() +
+                        "This program will move your robot and read the position reported by " +
+                        "the Pinpoint to confirm that it is configured correctly. " + System.lineSeparator() +
+                        System.lineSeparator() +
+                        "When you are ready to proceed, press A on the gamepad.";
+                break;
+            case TEST_X:
+            case TEST_Y:
+                output = "";
+                break;
+            case X_CORRECT:
+                output = "If the robot drove forward, please press the A button to continue." +
+                        System.lineSeparator() + "If the robot did not drive forward, press X";
+                break;
+            case Y_CORRECT:
+                output = "If the robot drove left, please press the A button to continue." +
+                        System.lineSeparator() + "If the robot did not drive left, press X";
+                break;
+            case X_MISMATCH:
+                output = "The Pinpoint did not observe an increase in X" + System.lineSeparator() +
+                        "If the robot drove forward, correct this problem by reversing the X " +
+                        "encoder on the Pinpoint." + System.lineSeparator() + System.lineSeparator() +
+                        "If the robot drove backwards, please confirm that each drive motor aligns " +
+                        "with the config file. If that is correct, you may need to reverse the " +
+                        "right side motors instead of the left side.";
+                break;
+            case Y_MISMATCH:
+                output = "The Pinpoint did not observe an increase in Y" + System.lineSeparator() +
+                        "if the robot drove left, correct this problem by reversing the Y " +
+                        "encoder on the Pinpoint." + System.lineSeparator() + System.lineSeparator() +
+                        "If the robot drove in any other direction, please confirm that each drive" +
+                        "motor aligns with the config file.";
+                break;
+            case CORRECT:
+                output = "You've completed the setup process for the Wayfinder! " +
+                        System.lineSeparator() + "If you needed to reverse encoder directions " +
+                        "for this test to complete, carry those modifications over " +
+                        "to your primary OpMode.";
+                break;
+        }
+        return output;
     }
 
     /**
@@ -151,6 +257,7 @@ public class WayfinderTester extends LinearOpMode {
         frontLeftDrive.setDirection(DcMotorSimple.Direction.REVERSE);
         backLeftDrive.setDirection(DcMotorSimple.Direction.REVERSE);
     }
+
     public void initializePinpoint(){
         pinpoint = hardwareMap.get(GoBildaPinpointDriver.class,"pinpoint");
         pinpoint.setOffsets(-142.0, 120.0, DistanceUnit.MM); //these are tuned for 3110-0002-0001 Product Insight #1
